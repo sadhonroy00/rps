@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors Monster Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #282c34;
+            color: white;
+        }
+        #game-container {
+            position: relative;
+            width: 80%;
+            margin: auto;
+            height: 500px;
+            border: 2px solid white;
+            overflow: hidden;
+            background-color: #444;
+            display: none;
+        }
+        .monster {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            text-align: center;
+            line-height: 100px;
+            font-size: 24px;
+            border-radius: 50%;
+            background-size: cover;
+        }
+        .rock-monster {
+            background-image: url('rock-knight.png');
+        }
+        .paper-monster {
+            background-image: url('paper-knight.png');
+        }
+        .scissors-monster {
+            background-image: url('scissors-knight.png');
+        }
+        #controls button, #start-button, #restart-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        #score-board {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+        }
+        #leaderboard {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        #game-over {
+            display: none;
+            font-size: 24px;
+            color: red;
+            margin-top: 20px;
+        }
+        #player-entry {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rock Paper Scissors Monster Game</h1>
+    <div id="player-entry">
+        <h2>Enter Your Name</h2>
+        <input type="text" id="player-name" placeholder="Enter your name">
+        <input type="text" id="player-fb" placeholder="Enter Facebook link">
+        <button onclick="savePlayer()">Save</button>
+    </div>
+    <button id="start-button" onclick="startGame()" style="display: none;">Start Game</button>
+    <div id="game-container">
+        <div id="score-board">Score: <span id="score">0</span></div>
+    </div>
+    <div id="controls" style="display: none;">
+        <button onclick="attack('rock')">Rock</button>
+        <button onclick="attack('paper')">Paper</button>
+        <button onclick="attack('scissors')">Scissors</button>
+    </div>
+    <div id="game-over">Game Over! Your score: <span id="final-score"></span>
+        <br>
+        <button id="restart-button" onclick="restartGame()">Restart Game</button>
+    </div>
+    <div id="leaderboard">
+        <h2>Leaderboard</h2>
+        <ol id="rank-list"></ol>
+    </div>
+    <script>
+        let score = 0;
+        let spawnTime = 5000;
+        let monsters = [
+            { type: 'rock', className: 'rock-monster' },
+            { type: 'paper', className: 'paper-monster' },
+            { type: 'scissors', className: 'scissors-monster' }
+        ];
+        let gameContainer = document.getElementById('game-container');
+        let scoreElement = document.getElementById('score');
+        let rankList = document.getElementById('rank-list');
+        let gameOverScreen = document.getElementById('game-over');
+        let finalScore = document.getElementById('final-score');
+        let controls = document.getElementById('controls');
+        let gameOver = false;
+        let playerName = "";
+        let playerFb = "";
+        let leaderboard = [];
+        let monsterInterval;
+
+        function updateLeaderboard() {
+            leaderboard.push({ name: playerName, score: score, fb: playerFb });
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 10);
+            rankList.innerHTML = "";
+            leaderboard.forEach(entry => {
+                let li = document.createElement('li');
+                li.innerHTML = `<a href="${entry.fb}" target="_blank">${entry.name}</a> - ${entry.score} points`;
+                rankList.appendChild(li);
+            });
+        }
+
+        function savePlayer() {
+            playerName = document.getElementById('player-name').value;
+            playerFb = document.getElementById('player-fb').value;
+            if (playerName && playerFb) {
+                document.getElementById('player-entry').style.display = 'none';
+                document.getElementById('start-button').style.display = 'block';
+            }
+        }
+
+        function startGame() {
+            document.getElementById('start-button').style.display = 'none';
+            gameContainer.style.display = 'block';
+            controls.style.display = 'block';
+            gameOver = false;
+            score = 0;
+            scoreElement.textContent = score;
+            spawnTime = 5000;
+            monsterInterval = setInterval(spawnMonster, spawnTime);
+        }
+
+        function spawnMonster() {
+            if (gameOver) return;
+            let monsterData = monsters[Math.floor(Math.random() * monsters.length)];
+            let monster = document.createElement('div');
+            monster.classList.add('monster', monsterData.className);
+            monster.dataset.type = monsterData.type;
+            monster.style.top = Math.random() * 400 + 'px';
+            monster.style.left = Math.random() * 80 + '%';
+            gameContainer.appendChild(monster);
+
+            setTimeout(() => {
+                if (monster.parentNode) {
+                    endGame();
+                }
+            }, spawnTime);
+        }
+
+        function attack(skill) {
+            let monsters = document.querySelectorAll('.monster');
+            let killed = false;
+            
+            monsters.forEach(monster => {
+                let monsterType = monster.dataset.type;
+                let validKill = (skill === 'rock' && monsterType === 'scissors') ||
+                                (skill === 'paper' && monsterType === 'rock') ||
+                                (skill === 'scissors' && monsterType === 'paper');
+                if (validKill) {
+                    score += 3;
+                    scoreElement.textContent = score;
+                    gameContainer.removeChild(monster);
+                    killed = true;
+                    if (spawnTime > 1000) spawnTime -= 200;
+                }
+            });
+
+            if (!killed) {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            gameOver = true;
+            clearInterval(monsterInterval);
+            gameContainer.style.display = 'none';
+            controls.style.display = 'none';
+            gameOverScreen.style.display = 'block';
+            finalScore.textContent = score;
+            updateLeaderboard();
+        }
+    </script>
+</body>
+</html>
