@@ -137,11 +137,17 @@
             document.getElementById('start-button').style.display = 'none';
             gameContainer.style.display = 'block';
             controls.style.display = 'block';
+            gameOverScreen.style.display = 'none';
             gameOver = false;
             score = 0;
             scoreElement.textContent = score;
             spawnTime = 5000;
             monsterInterval = setInterval(spawnMonster, spawnTime);
+        }
+
+        function restartGame() {
+            gameOverScreen.style.display = 'none';
+            startGame();
         }
 
         function spawnMonster() {
